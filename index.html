@@ -1,0 +1,128 @@
+<!-- This is a task manager application for LeadPoint Digital by Ty Robertson -->
+<!-- App has ability to create, edit, delete, and complete tasks -->
+<!-- Also has functionality to be sorted by all, active, and completed -->
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>FE - Interview Project</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		<style>
+			[x-cloak] {
+				display: none;
+			}
+			.completed{
+				text-decoration: line-through;
+			}
+		</style>
+	</head>
+    <body x-data="taskManager()" x-init="loadTasks()">
+        <h1 class="mb-4 text-5xl font-extrabold text-blue-500">Sidenote</h1>
+        <div class="mb-4">
+            <!-- input fields for the task name and optional description -->
+            <input x-model="newTask.name" placeholder="Task name" class="rounded-md p-2 border" />
+            <input x-model="newTask.description" placeholder="Task description" class="rounded-md p-2 border" />
+            <!-- button to add the new task -->
+            <button x-on:click="addTask" class="bg-blue-500 text-white px-4 py-2 rounded-md ml-2" >Add Task</button>
+        </div>
+        <div class="mb-4">
+            <!-- dropdown to filter tasks between all, active, and completed -->
+            <label class="font-semibold">Filter Tasks:</label>
+            <select x-model="filter" class="rounded-md p-2 border ml-3">
+                <option value="all">All</option>
+                <option value="current">Active</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <ul class="divide-y divide-gray-300">
+            <!-- displays tasks using alpineJS's x-for loop -->
+            <template x-for="(task, index) in filteredTasks" :key="index">
+                <li  class="p-2 flex items-center">
+                    <!-- checkbox to mark task as completed -->
+                    <input :class="{ 'completed': task.completed }" type="checkbox" x-model="task.completed" x-on:click="toggleComplete(task)" class="mr-3">
+                    <!-- displays name and description of task -->
+                    <span :class="{ 'completed': task.completed }" x-text="task.name" class="flex" :class="{ 'line-through': task.completed }"></span>&ensp;-&ensp;<span :class="{ 'completed': task.completed }" x-text="task.description" class="flex"></span>
+                    <!-- buttons to edit and delete task -->
+                    <button x-on:click="editTask(index)" class="text-blue-500 ml-2">Edit</button>
+                    <button x-on:click="deleteTask(index)" class="text-red-500 ml-2">Delete</button>
+                </li>
+            </template>
+        </ul>
+    
+        <script>
+            function taskManager() {
+                return {
+                    // data properties for each task
+                    newTask: {
+                        name: "",
+                        description: "",
+                        completed: false,
+                    },
+                    tasks: [],
+                    filter: "all",
+    
+                    // loads tasks from local storage when page is loaded
+                    loadTasks() {
+                        const storedTasks = localStorage.getItem('tasks');
+                        if (storedTasks) {
+                            this.tasks = JSON.parse(storedTasks);
+                        }
+                    },
+    
+                    // saves tasks to local storage
+                    saveTasks() {
+                        localStorage.setItem('tasks', JSON.stringify(this.tasks));
+                    },
+    
+                    // adds task
+                    addTask() {
+                        if (this.newTask.name.trim() !== "") {
+                            this.tasks.push({ ...this.newTask });
+                            this.newTask.name = "";
+                            this.newTask.description = "";
+                            this.saveTasks();
+                        }
+                    },
+    
+                    // edits old task name and description
+                    editTask(index) {
+                        const taskToEdit = this.tasks[index];
+                        const updatedName = prompt("Edit task name:", taskToEdit.name);
+                        const updatedDescription = prompt("Edit task description:", taskToEdit.description);
+                        if (updatedName !== null && updatedName.trim() !== "") {
+                            taskToEdit.name = updatedName;
+                            taskToEdit.description = updatedDescription;
+                            this.saveTasks();
+                        }
+                    },
+    
+                    // deletes task
+                    deleteTask(index) {
+                        this.tasks.splice(index, 1);
+                        this.saveTasks();
+                    },
+    
+                    // toggles task completion
+                    toggleComplete(task) {
+                        task.completed = !task.completed;
+                        this.saveTasks();
+                    },
+    
+                    // filter tasks based on dropdown selection
+                    get filteredTasks() {
+                        if (this.filter === "current") {
+                            return this.tasks.filter((task) => !task.completed);
+                        } else if (this.filter === "completed") {
+                            return this.tasks.filter((task) => task.completed);
+                        }
+                        return this.tasks;
+                    },
+                };
+            }
+        </script>
+    </body>
+</html>
